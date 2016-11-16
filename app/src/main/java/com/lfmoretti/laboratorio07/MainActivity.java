@@ -15,6 +15,7 @@ import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.text.InputType;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
@@ -33,6 +34,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.lfmoretti.laboratorio07.Modelo.Reclamo;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
@@ -42,9 +44,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final int PERMISSION_REQUEST_ACCESS_FINE_LOCATION = 1;
     protected static final int ALTA_RECLAMO_OK = 2;
     protected static final int ALTA_RECLAMO_CANCELADO = 3;
+
     private GoogleMap mMap;
     private ArrayList<Reclamo> reclamos;
-    ArrayList<Polyline> polylines;
+    private ArrayList<Polyline> polylines;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,13 +65,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void onSaveInstanceState(Bundle outState){
         super.onSaveInstanceState(outState);
         outState.putSerializable("reclamos",reclamos);
-        outState.putSerializable("polylines",polylines);
     }
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         reclamos = (ArrayList<Reclamo>) savedInstanceState.getSerializable("reclamos");
-        polylines = (ArrayList<Polyline>) savedInstanceState.getSerializable("polylines");
     }
 
     @Override
@@ -86,7 +87,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap.setOnMapLongClickListener(this);
         mMap.setOnInfoWindowClickListener(this);
         mMap.setOnMapClickListener(this);
-        mMap.setInfoWindowAdapter(new MyInfoWindowAdapter());
+        //mMap.setInfoWindowAdapter(new MyInfoWindowAdapter());
+
     }
 
     public void setLocationWithPermission(){
@@ -177,8 +179,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onInfoWindowClick(final Marker marker) {
         final EditText distancia = new EditText(getApplicationContext());
+        distancia.setInputType(InputType.TYPE_CLASS_NUMBER);
+        distancia.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.Black));
         distancia.setHint("Distancia máxima en km");
-        distancia.setTextColor(R.color.Black);
+
 
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this)
                 .setTitle("Mostrar reclamos cercanos")
@@ -188,9 +192,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .setOnDismissListener(new DialogInterface.OnDismissListener() {
                     @Override
                     public void onDismiss(DialogInterface dialog) {
-                        float distanciaMaxima = 1000 * Float.parseFloat(distancia.getText().toString()); //distancia en metros
-                        ArrayList<Reclamo> reclamosCercanos = buscarReclamosCercanos(marker.getPosition(), distanciaMaxima);
-                        visualizarReclamosCercanos(marker.getPosition(), reclamosCercanos);
+                        if(!Objects.equals(distancia.getText().toString(),"")) {
+                            float distanciaMaxima = 1000 * Float.parseFloat(distancia.getText().toString()); //distancia en metros
+                            ArrayList<Reclamo> reclamosCercanos = buscarReclamosCercanos(marker.getPosition(), distanciaMaxima);
+                            visualizarReclamosCercanos(marker.getPosition(), reclamosCercanos);
+                        }
                     }
         });
         builder.show();
@@ -234,6 +240,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         removerDistancias();
     }
 
+    /*
     private Reclamo findReclamoByLatLng(LatLng latlng){
         for(Reclamo r: reclamos){
             if(r.getLatitud()==latlng.latitude && r.getLongitud()==latlng.longitude){
@@ -242,6 +249,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
         return null;
     }
+
 
     class MyInfoWindowAdapter implements GoogleMap.InfoWindowAdapter {
 
@@ -267,10 +275,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         @Override
         public View getInfoWindow(Marker marker) {
-            // TODO Auto-generated method stub
             return null;
         }
 
     }
-
+*/
 }
