@@ -8,4 +8,5 @@
     <string name="btn_reclamar">Reclamar</string>
     <string name="btn_cancelar">Cancelar</string>
     <string name="distancia_maxima">Distancia máxima</string>
+    <string name="btn_agregar_foto">Agregar Foto</string>
 </resources>

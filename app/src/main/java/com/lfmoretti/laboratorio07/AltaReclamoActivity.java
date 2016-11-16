@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 
 import com.lfmoretti.laboratorio07.Modelo.Reclamo;
 
@@ -20,6 +21,7 @@ public class AltaReclamoActivity extends AppCompatActivity implements View.OnCli
 
     private Button btnReclamar;
     private Button btnCancelar;
+    private ImageButton btnAgregarFoto;
 
 
     @Override
@@ -28,6 +30,7 @@ public class AltaReclamoActivity extends AppCompatActivity implements View.OnCli
         setContentView(R.layout.activity_alta_reclamo);
         setParametros();
         btnReclamar.setOnClickListener(this);
+        btnAgregarFoto.setOnClickListener(this);
     }
 
     private void setParametros() {
@@ -36,6 +39,7 @@ public class AltaReclamoActivity extends AppCompatActivity implements View.OnCli
         email = (EditText) findViewById(R.id.et_email);
         btnReclamar = (Button) findViewById(R.id.btn_reclamar);
         btnCancelar = (Button) findViewById(R.id.btn_cancelar);
+        btnAgregarFoto = (ImageButton) findViewById(R.id.btn_agregar_foto);
         Intent i = getIntent();
         latitud = i.getDoubleExtra("latitud",0);
         longitud = i.getDoubleExtra("longitud",0);
@@ -67,6 +71,9 @@ public class AltaReclamoActivity extends AppCompatActivity implements View.OnCli
                 break;
             case R.id.btn_cancelar:
                 salir();
+                break;
+            case R.id.btn_agregar_foto:
+
                 break;
         }
     }

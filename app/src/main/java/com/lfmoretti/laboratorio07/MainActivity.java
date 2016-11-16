@@ -6,6 +6,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -15,7 +16,6 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.GoogleMap;
@@ -24,21 +24,23 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.lfmoretti.laboratorio07.Modelo.Reclamo;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 
-public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMapLongClickListener, GoogleMap.OnInfoWindowClickListener {
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMapLongClickListener, GoogleMap.OnMapClickListener, GoogleMap.OnInfoWindowClickListener {
 
     private static final int PERMISSION_REQUEST_ACCESS_FINE_LOCATION = 1;
     protected static final int ALTA_RECLAMO_OK = 2;
     protected static final int ALTA_RECLAMO_CANCELADO = 3;
     private GoogleMap mMap;
     private ArrayList<Reclamo> reclamos;
+    ArrayList<Polyline> polylines;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,17 +51,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         reclamos = new ArrayList<>();
+        polylines = new ArrayList<>();
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState){
         super.onSaveInstanceState(outState);
         outState.putSerializable("reclamos",reclamos);
+        outState.putSerializable("polylines",polylines);
     }
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         reclamos = (ArrayList<Reclamo>) savedInstanceState.getSerializable("reclamos");
+        polylines = (ArrayList<Polyline>) savedInstanceState.getSerializable("polylines");
     }
 
     @Override
@@ -69,11 +74,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             mMap.addMarker(new MarkerOptions()
                     .position(new LatLng(r.getLatitud(),  r.getLongitud()))
                     .title("Reclamo de "+r.getEmail())
-                    .snippet(r.getTitulo()));
+                    .snippet(r.getTitulo())
+                    .draggable(true));
         }
+        visualizarDistancias();
         setLocationWithPermission();
         mMap.setOnMapLongClickListener(this);
         mMap.setOnInfoWindowClickListener(this);
+        mMap.setOnMapClickListener(this);
     }
 
     public void setLocationWithPermission(){
@@ -143,7 +151,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             .position(new LatLng(reclamoAux.getLatitud(), reclamoAux.getLongitud()))
                             .title("Reclamo de "+reclamoAux.getEmail())
                             .snippet(reclamoAux.getTitulo())
-                    );
+                            .draggable(true)); //TODO implementar
                     Toast.makeText(getApplicationContext(), "Reclamo marcado", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -162,18 +170,63 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
-    public void onInfoWindowClick(Marker marker) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+    public void onInfoWindowClick(final Marker marker) {
+        final EditText distancia = new EditText(getApplicationContext());
+        distancia.setHint("Distancia máxima en km");
+        distancia.setTextColor(R.color.Black);
 
-        builder.setTitle("Mostrar reclamos cercanos");
-        builder.setPositiveButton(android.R.string.search_go, null);
-        builder.setView(R.layout.dialog_marker);
-        builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
-            @Override
-            public void onDismiss(DialogInterface dialog) {
-                //TODO implementar busqueda
-            }
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this)
+                .setTitle("Mostrar reclamos cercanos")
+                .setPositiveButton(android.R.string.search_go, null)
+                .setView(distancia)
+                .setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialog) {
+                        float distanciaMaxima = 1000 * Float.parseFloat(distancia.getText().toString()); //distancia en metros
+                        ArrayList<Reclamo> reclamosCercanos = buscarReclamosCercanos(marker.getPosition(), distanciaMaxima);
+                        visualizarReclamosCercanos(marker.getPosition(), reclamosCercanos);
+                    }
         });
         builder.show();
+    }
+
+    private ArrayList<Reclamo> buscarReclamosCercanos(LatLng posOrigen, float distanciaMaxima) {
+        ArrayList<Reclamo> reclamosCercanos = new ArrayList<>();
+        for(Reclamo r: reclamos){
+            float[] results = new float[2];
+            Location.distanceBetween(posOrigen.latitude,posOrigen.longitude,r.getLatitud(),r.getLongitud(),results);
+            if(results[0]<distanciaMaxima){
+                reclamosCercanos.add(r);
+            }
+        }
+        return reclamosCercanos;
+    }
+
+    private void visualizarReclamosCercanos(LatLng posOrigen, ArrayList<Reclamo> reclamosCercanos) {
+        for(Reclamo r: reclamosCercanos){
+            PolylineOptions distancia = new PolylineOptions();
+            distancia.add(posOrigen,new LatLng(r.getLatitud(),r.getLongitud()));
+            polylines.add(mMap.addPolyline(distancia));
+        }
+    }
+
+    private void visualizarDistancias(){
+        for(Polyline distancia: polylines){
+            mMap.addPolyline(new PolylineOptions().addAll(distancia.getPoints()));
+        }
+    }
+
+    private void removerDistancias(){
+        for(Polyline distancia: polylines){
+            distancia.remove();
+        }
+        polylines.clear();
+    }
+
+    @Override
+    public void onMapClick(LatLng latLng) {
+        Toast.makeText(getApplicationContext(),"click",Toast.LENGTH_SHORT).show();
+        removerDistancias();
+        Toast.makeText(getApplicationContext(),"click eco",Toast.LENGTH_SHORT).show();
     }
 }

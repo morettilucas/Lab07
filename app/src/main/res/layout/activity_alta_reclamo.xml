@@ -62,17 +62,25 @@
 
             <Button
                 android:text="@string/btn_reclamar"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/btn_reclamar"
                 android:layout_weight="1" />
 
             <Button
                 android:text="@string/btn_cancelar"
-                android:layout_width="match_parent"
+                android:layout_width="132dp"
                 android:layout_height="wrap_content"
                 android:id="@+id/btn_cancelar"
+                android:layout_weight="1"/>
+
+            <ImageButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style:srcCompat="@android:drawable/ic_menu_camera"
+                android:id="@+id/btn_agregar_foto"
                 android:layout_weight="1" />
+
         </LinearLayout>
     </LinearLayout>
 </RelativeLayout>
