@@ -6,6 +6,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
@@ -15,7 +16,10 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.GoogleMap;
@@ -82,6 +86,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap.setOnMapLongClickListener(this);
         mMap.setOnInfoWindowClickListener(this);
         mMap.setOnMapClickListener(this);
+        mMap.setInfoWindowAdapter(new MyInfoWindowAdapter());
     }
 
     public void setLocationWithPermission(){
@@ -178,6 +183,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this)
                 .setTitle("Mostrar reclamos cercanos")
                 .setPositiveButton(android.R.string.search_go, null)
+                .setCancelable(true)
                 .setView(distancia)
                 .setOnDismissListener(new DialogInterface.OnDismissListener() {
                     @Override
@@ -225,8 +231,46 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onMapClick(LatLng latLng) {
-        Toast.makeText(getApplicationContext(),"click",Toast.LENGTH_SHORT).show();
         removerDistancias();
-        Toast.makeText(getApplicationContext(),"click eco",Toast.LENGTH_SHORT).show();
     }
+
+    private Reclamo findReclamoByLatLng(LatLng latlng){
+        for(Reclamo r: reclamos){
+            if(r.getLatitud()==latlng.latitude && r.getLongitud()==latlng.longitude){
+                return r;
+            }
+        }
+        return null;
+    }
+
+    class MyInfoWindowAdapter implements GoogleMap.InfoWindowAdapter {
+
+        private final View myContentsView;
+
+        MyInfoWindowAdapter(){
+            myContentsView = getLayoutInflater().inflate(R.layout.custom_info_marker, null);
+        }
+
+        @Override
+        public View getInfoContents(Marker marker) {
+            Reclamo reclamo = findReclamoByLatLng(marker.getPosition());
+
+            TextView tvTitle = ((TextView)myContentsView.findViewById(R.id.title));
+            tvTitle.setText(marker.getTitle());
+            TextView tvSnippet = ((TextView)myContentsView.findViewById(R.id.snippet));
+            tvSnippet.setText(marker.getSnippet());
+            ImageView imvImagen = (ImageView) myContentsView.findViewById(R.id.imagen);
+            imvImagen.setImageBitmap(BitmapFactory.decodeFile(reclamo.getImagenPath()));
+
+            return myContentsView;
+        }
+
+        @Override
+        public View getInfoWindow(Marker marker) {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+    }
+
 }

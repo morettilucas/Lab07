@@ -1,5 +1,7 @@
 package com.lfmoretti.laboratorio07.Modelo;
 
+import android.widget.ImageView;
+
 import java.io.Serializable;
 
 public class Reclamo implements Serializable {
